@@ -1,0 +1,197 @@
+services:
+  database:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER_NAME}
+      MYSQL_PASSWORD: ${DATABASE_USER_PASSWORD}
+    restart: always
+    ports:
+      - "44306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+    hostname: database
+
+  liquibase:
+    image: regorianer/nft-bidding-suite-public-liquibase:latest
+    depends_on:
+      - database
+    environment:
+      LIQUIBASE_URL: jdbc:mysql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
+      LIQUIBASE_USERNAME: ${DATABASE_USER_NAME}
+      LIQUIBASE_PASSWORD: ${DATABASE_USER_PASSWORD}
+    command: ["--url=jdbc:mysql://database:3306/${DATABASE_NAME}", "--changeLogFile=changelog/changelog.xml", "--username=${DATABASE_USER_NAME}", "--password=${DATABASE_USER_PASSWORD}", "update"]
+    networks:
+      - app-network
+
+  settings_app:
+    image: regorianer/nft-bidding-suite-public-settings_app:latest
+    depends_on:
+      - database
+    restart: always
+    environment:
+      DATABASE_USER_NAME: ${DATABASE_USER_NAME}
+      DATABASE_USER_PASSWORD: ${DATABASE_USER_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_HOST: ${DATABASE_HOST}
+      APP_LICENSE_KEY: ${APP_LICENSE_KEY}
+      USER_NAME: ${USER_NAME}
+      USER_PASSWORD: ${USER_PASSWORD}
+    env_file:
+      - .env
+    ports:
+      - "45000:5000"
+    networks:
+      - app-network
+
+  log_app:
+    image: regorianer/nft-bidding-suite-public-log_app:latest
+    depends_on:
+      - database
+    restart: always
+    environment:
+      DATABASE_USER_NAME: ${DATABASE_USER_NAME}
+      DATABASE_USER_PASSWORD: ${DATABASE_USER_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_HOST: ${DATABASE_HOST}
+      USER_NAME: ${USER_NAME}
+      USER_PASSWORD: ${USER_PASSWORD}
+    env_file:
+      - .env
+    ports:
+      - "45001:5001"
+    networks:
+      - app-network
+
+  bid_validation_app:
+    image: regorianer/nft-bidding-suite-public-bid_validation_app:latest
+    depends_on:
+      - database
+    restart: always
+    environment:
+      DATABASE_USER_NAME: ${DATABASE_USER_NAME}
+      DATABASE_USER_PASSWORD: ${DATABASE_USER_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_HOST: ${DATABASE_HOST}
+      BID_PROCESS_APP_PORT: ${BID_PROCESS_APP_PORT}
+      BID_PROCESS_APP_HOST: ${BID_PROCESS_APP_HOST}
+      BID_OPENSEA_API_KEY: ${BID_OPENSEA_API_KEY}
+      OVERBID_PROCESS_APP_PORT: ${OVERBID_PROCESS_APP_PORT}
+      OVERBID_PROCESS_APP_HOST: ${OVERBID_PROCESS_APP_HOST}
+      OVERBID_OPENSEA_API_KEY: ${OVERBID_OPENSEA_API_KEY}
+      RAPIDAPI_API_KEY: ${RAPIDAPI_API_KEY}
+      NFT_TOOLS_API_KEY: ${NFT_TOOLS_API_KEY}
+      APP_LICENSE_KEY: ${APP_LICENSE_KEY}
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  bid_process_app:
+    image: regorianer/nft-bidding-suite-public-bid_process_app:latest
+    ports:
+      - "45912:9912"
+    depends_on:
+      - database
+    restart: always
+    environment:
+      BID_WALLET_PRIVATE_KEY: ${BID_WALLET_PRIVATE_KEY}
+      BID_OPENSEA_API_KEY: ${BID_OPENSEA_API_KEY}
+      OPENSEA_API_BASE_URL: ${OPENSEA_API_BASE_URL}
+      RAPIDAPI_API_BASE_URL: ${RAPIDAPI_API_BASE_URL}
+      NFT_TOOLS_API_BASE_URL: ${NFT_TOOLS_API_BASE_URL}
+    env_file:
+      - .env
+    networks:
+      - app-network
+    hostname: bid_process_app
+
+  bid_manager_app:
+    image: regorianer/nft-bidding-suite-public-bid_manager_app:latest
+    ports:
+      - "45002:5002"
+    depends_on:
+      - database
+    restart: always
+    environment:
+      DATABASE_USER_NAME: ${DATABASE_USER_NAME}
+      DATABASE_USER_PASSWORD: ${DATABASE_USER_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_HOST: ${DATABASE_HOST}
+      BID_OPENSEA_API_KEY: ${BID_OPENSEA_API_KEY}
+      OVERBID_OPENSEA_API_KEY: ${OVERBID_OPENSEA_API_KEY}
+      BID_PROCESS_APP_PORT: ${BID_PROCESS_APP_PORT}
+      BID_PROCESS_APP_HOST: ${BID_PROCESS_APP_HOST}
+      OVERBID_PROCESS_APP_PORT: ${OVERBID_PROCESS_APP_PORT}
+      OVERBID_PROCESS_APP_HOST: ${OVERBID_PROCESS_APP_HOST}
+      RAPIDAPI_API_KEY: ${RAPIDAPI_API_KEY}
+      NFT_TOOLS_API_KEY: ${NFT_TOOLS_API_KEY}
+      USER_NAME: ${USER_NAME}
+      USER_PASSWORD: ${USER_PASSWORD}
+      APP_LICENSE_KEY: ${APP_LICENSE_KEY}
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  bid_stream_app:
+    image: regorianer/nft-bidding-suite-public-bid_stream_app:latest
+    depends_on:
+      - database
+    restart: always
+    environment:
+      DATABASE_USER_NAME: ${DATABASE_USER_NAME}
+      DATABASE_USER_PASSWORD: ${DATABASE_USER_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_HOST: ${DATABASE_HOST}
+      OVERBID_PROCESS_APP_HOST: ${OVERBID_PROCESS_APP_HOST}
+      OVERBID_PROCESS_APP_PORT: ${OVERBID_PROCESS_APP_PORT}
+      BID_WALLET_PUBLIC_KEY: ${BID_WALLET_PUBLIC_KEY}
+      OVERBID_WALLET_PUBLIC_KEY: ${OVERBID_WALLET_PUBLIC_KEY}
+      OVERBID_OPENSEA_API_KEY: ${OVERBID_OPENSEA_API_KEY}
+      RAPIDAPI_API_KEY: ${RAPIDAPI_API_KEY}
+      NFT_TOOLS_API_KEY: ${NFT_TOOLS_API_KEY}
+      APP_LICENSE_KEY: ${APP_LICENSE_KEY}
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  bid_poll_app:
+    image: regorianer/nft-bidding-suite-public-bid_poll_app:latest
+    depends_on:
+      - database
+    restart: always
+    environment:
+      DATABASE_USER_NAME: ${DATABASE_USER_NAME}
+      DATABASE_USER_PASSWORD: ${DATABASE_USER_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_HOST: ${DATABASE_HOST}
+      OVERBID_PROCESS_APP_HOST: ${OVERBID_PROCESS_APP_HOST}
+      OVERBID_PROCESS_APP_PORT: ${OVERBID_PROCESS_APP_PORT}
+      BID_WALLET_PUBLIC_KEY: ${BID_WALLET_PUBLIC_KEY}
+      OVERBID_WALLET_PUBLIC_KEY: ${OVERBID_WALLET_PUBLIC_KEY}
+      OVERBID_OPENSEA_API_KEY: ${OVERBID_OPENSEA_API_KEY}
+      RAPIDAPI_API_KEY: ${RAPIDAPI_API_KEY}
+      NFT_TOOLS_API_KEY: ${NFT_TOOLS_API_KEY}
+      APP_LICENSE_KEY: ${APP_LICENSE_KEY}
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+volumes:
+  mysql-data:
+
+networks:
+  app-network:
+    driver: bridge
