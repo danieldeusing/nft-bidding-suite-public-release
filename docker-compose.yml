@@ -1,6 +1,7 @@
 services:
   database:
     image: mysql:8.0
+    container_name: nft-bidding-suite-public-database
     environment:
       MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DATABASE_NAME}
@@ -17,6 +18,7 @@ services:
 
   liquibase:
     image: regorianer/nft-bidding-suite-public-liquibase:latest
+    container_name: nft-bidding-suite-public-liquibase
     depends_on:
       - database
     environment:
@@ -29,6 +31,7 @@ services:
 
   settings_app:
     image: regorianer/nft-bidding-suite-public-settings_app:latest
+    container_name: nft-bidding-suite-public-settings_app
     depends_on:
       - database
     restart: always
@@ -50,6 +53,7 @@ services:
 
   log_app:
     image: regorianer/nft-bidding-suite-public-log_app:latest
+    container_name: nft-bidding-suite-public-log_app
     depends_on:
       - database
     restart: always
@@ -70,6 +74,7 @@ services:
 
   bid_validation_app:
     image: regorianer/nft-bidding-suite-public-bid_validation_app:latest
+    container_name: nft-bidding-suite-public-bid_validation_app
     depends_on:
       - database
     restart: always
@@ -95,6 +100,7 @@ services:
 
   bid_process_app:
     image: regorianer/nft-bidding-suite-public-bid_process_app:latest
+    container_name: nft-bidding-suite-public-bid_process_app
     ports:
       - "45912:9912"
     depends_on:
@@ -114,6 +120,7 @@ services:
 
   bid_manager_app:
     image: regorianer/nft-bidding-suite-public-bid_manager_app:latest
+    container_name: nft-bidding-suite-public-bid_manager_app
     ports:
       - "45002:5002"
     depends_on:
@@ -143,6 +150,7 @@ services:
 
   bid_stream_app:
     image: regorianer/nft-bidding-suite-public-bid_stream_app:latest
+    container_name: nft-bidding-suite-public-bid_stream_app
     depends_on:
       - database
     restart: always
@@ -167,6 +175,7 @@ services:
 
   bid_poll_app:
     image: regorianer/nft-bidding-suite-public-bid_poll_app:latest
+    container_name: nft-bidding-suite-public-bid_poll_app
     depends_on:
       - database
     restart: always
